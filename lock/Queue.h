@@ -1,20 +1,17 @@
+#ifndef QUEUE_H_
+#define QUEUE_H_
+
 #include <exception> //exception
 #include <memory> //shared_ptr
 #include <mutex> //mutex lock_guard
 #include <queue> //queue
 #include <condition_variable> //condition_variable
 
-#include<vector>
-#include<thread>
-#include<algorithm>
-#include<functional>
-#include<iostream>
-
 /**
  * 最精彩的三步
- * 傀儡节点
- * 数据存为智能指针 解决值的异常安全
- * 
+ * 傀儡节点减小锁的粒度
+ * 数据存为智能指针 解决pop中一种重载的异常安全问题
+ * push中值传递 保证异常安全(效率?)
 */
 
 template<typename T>
@@ -44,14 +41,14 @@ class Threadsafe_Queue{
 
         std::unique_ptr<node> wait_pop_head(){
             std::unique_lock<std::mutex> head_lock(head_mutex);
-            data_cond.wait(head_lock, [&](){return head.get()!=get_tail();})
+            data_cond.wait(head_lock, [&](){return head.get()!=get_tail();});
             return pop_head();
         }
 
         void wait_pop_head(T& value){
             std::unique_lock<std::mutex> head_lock(head_mutex);
-            data_cond.wait(head_lock, [&](){return head.get()!=get_tail();})
-            value = std::move(*head->data);//数据存为智能指针 完美解决异常安全
+            data_cond.wait(head_lock, [&](){return head.get()!=get_tail();});
+            value = std::move(*head->data);
             pop_head();
         }
 
@@ -68,13 +65,13 @@ class Threadsafe_Queue{
             if(head.get() == get_tail()){
                 return nullptr;
             }
-            value = std::move(&head->data);
+            value = std::move(*head->data);
             return pop_head();
         }        
 
     public:
         Threadsafe_Queue() : 
-            head(new node), tail(head.get()){} //精髓 使用一个傀儡节点以减小锁的粒度
+            head(new node), tail(head.get()){}
 
         Threadsafe_Queue(const Threadsafe_Queue&) = delete;
         Threadsafe_Queue& operator=(const Threadsafe_Queue&) = delete;
@@ -116,7 +113,7 @@ Threadsafe_Queue<T>::try_pop(){
 template<typename T>
 bool
 Threadsafe_Queue<T>::try_pop(T& value){
-    return std::static_cast<bool>(try_pop_head(value));
+    return static_cast<bool>(try_pop_head(value));
 }
 
 template<typename T>
@@ -136,17 +133,4 @@ Threadsafe_Queue<T>::push(T value){
     data_cond.notify_one();
 }
 
-
-int main(){
-    Threadsafe_Queue<int> que;
-    std::vector<std::thread> vec(10);
-    for(int i = 0; i < 10; i++){
-        vec[i] = std::thread(&Threadsafe_Queue<int>::push, &que, i);
-    }
-    std::for_each(vec.begin(), vec.end(), std::mem_fn(&std::thread::join));
-    for(size_t i = 0; i < 10; i++)
-    {
-        std::cout << *que.try_pop() << std::endl;
-    }
-    return 0;
-}
+#endif //QUEUE_H_
