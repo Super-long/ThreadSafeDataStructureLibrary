@@ -8,7 +8,6 @@
 #include <memory> //unique_ptr
 #include <mutex> //lock_guard
 #include <boost/thread/shared_mutex.hpp> // shared_mutex
-#include<iostream>
 
 template<typename Key, typename Value, typename Hash = std::hash<Key>>
 class Threadsafe_unordered_map{
@@ -55,7 +54,6 @@ class Threadsafe_unordered_map{
                     std::unique_lock<boost::shared_mutex> guard(mutex);
                     const buket_iterator value_iterator = find_entry(key);
                     if(value_iterator != data.end()){
-                        std::cout << key <<" 成功删除\n";
                         data.erase(value_iterator);
                     }
                 }
@@ -106,11 +104,11 @@ class Threadsafe_unordered_map{
 template<typename Key, typename Value, typename Hash>
 std::map<Key, Value>
 Threadsafe_unordered_map<Key, Value, Hash>::get_standard_map() const {
+    std::map<key_type, value_type> instance;
     std::vector<std::unique_lock<boost::shared_mutex>> lk;
     for(size_t i = 0; i < bukets.size(); i++){
         lk.emplace_back(std::unique_lock<boost::shared_mutex>(bukets[i]->mutex));
     }
-    std::map<key_type, value_type> instance;
     for(size_t i = 0; i < bukets.size(); i++){
 /*         std::for_each(bukets[i]->data.begin(), bukets[i]->data.end(),
             [&](const typename buket_type::buket_iterator& bi){
@@ -121,7 +119,7 @@ Threadsafe_unordered_map<Key, Value, Hash>::get_standard_map() const {
                 instance.insert(*bt);
             }
     }
-    return instance;
+    return std::move(instance);
 }
 
 #endif //THREADSAFE_UNORDERED_MAP_H_
