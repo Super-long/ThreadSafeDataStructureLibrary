@@ -12,13 +12,14 @@
  * 傀儡节点减小锁的粒度
  * 数据存为智能指针 解决pop中一种重载的异常安全问题
  * push中值传递 保证异常安全(效率?)
+ * @ 总结 : 最小化必然发生的序列化,最大化实现并发性
 */
 
 template<typename T>
 class Threadsafe_Queue{
     private:
         struct node{
-            std::shared_ptr<T> data;//指针拷贝一份大多优于数据拷贝一份
+            std::shared_ptr<T> data;//指针拷贝一份大多效率优于数据拷贝一份
             std::unique_ptr<node> next;
         };
 
