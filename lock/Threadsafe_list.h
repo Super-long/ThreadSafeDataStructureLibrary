@@ -5,6 +5,7 @@
 #include <memory> //unique_ptr shared_ptr
 #include <mutex> //lock_guard mutex
 #include <list> //list
+#include <functional> //function
 
 /**
  * @ 不完美的地方在于实现的是自迭代 即迭代由容器完成
@@ -26,7 +27,7 @@ namespace Threadsafe{
                 node(const T& data) : 
                     ptr(std::make_shared<T>(data)){}
             };
-            node head
+            node head;
         
         public:
             Threadsafe_List(){}
@@ -39,10 +40,10 @@ namespace Threadsafe{
             Threadsafe_List& operator=(const Threadsafe_List&) = delete;
 
             void push_front(const T& value){
-                std::unique_ptr<T> new_node(new node(value));
+                std::unique_ptr<node> new_node(new node(value));
                 std::lock_guard<std::mutex> guard(head.m);
-                new_node->next = std::move(head->next); //有头结点
-                head->next = new_node;
+                new_node->next = std::move(head.next); //有头结点
+                head.next = std::move(new_node);
             }
 
             template<typename Function>
@@ -91,17 +92,17 @@ namespace Threadsafe{
                 }
             }
 
-            template<typename predicate, typename Function>
-            void update(const predicate& p, const Function& F){
+            //从泛型改为function的原因是thread参数使用泛型会有问题 那个问题现在不好解决
+            void update(std::function<bool(T&)> predicate, std::function<void(T&)> function){
                 node* current = &head;
-                std::unique_lock<std::mutex> lk(head->m);
-                while(const node* next = current->next.get()){
+                std::unique_lock<std::mutex> lk(current->m);
+                while(node* const next = current->next.get()){
                     std::unique_lock<std::mutex> guard(next->m);
                     lk.unlock();
-                    if(p(*next->ptr))
-                        f(*next->ptr);
+                    if(predicate(*next->ptr))
+                        function(*next->ptr);
                     current = next;
-                    lk(std::move(guard));
+                    lk = std::move(guard);
                 }
             }
 
@@ -111,10 +112,11 @@ namespace Threadsafe{
                 std::vector<std::unique_lock<std::mutex>> lks;
                 {
                     //锁住这里意味着get_list的时候list是一个不变量
-                    std::guard_lock<std::mutex> lk(current.m); 
+                    std::lock_guard<std::mutex> lk(head.m); 
                     while(node* const next = current->next.get()){
-                        lks.emplace_back(std::unique_ptr<std::mutex>(next->m));
+                        lks.emplace_back(std::unique_lock<std::mutex>(next->m));
                         stores.push_back(*next->ptr);
+                        current = next;
                     }
                 }
                 return std::move(stores);
