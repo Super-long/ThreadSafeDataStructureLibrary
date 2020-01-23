@@ -11,7 +11,8 @@ int main(){
         vecone[i] = std::thread(&Threadsafe::Threadsafe_List<int>::push_front, &List, i);
     }
     for(size_t i = 0; i < 10; i++){
-        vectwo[i] = std::thread(&Threadsafe::Threadsafe_List<int>::update, &List, [](int& T){ return true;} ,[](int& T){return T+=10;});
+        vectwo[i] = std::thread(&Threadsafe::Threadsafe_List<int>::update,
+        &List, [](int& T){ return true;} ,[](int& T){return T+=10;});
     }
     std::for_each(vecone.begin(), vecone.end(), std::mem_fn(&std::thread::join));
     std::for_each(vectwo.begin(), vectwo.end(), std::mem_fn(&std::thread::join));

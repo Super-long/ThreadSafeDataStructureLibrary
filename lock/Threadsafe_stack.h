@@ -31,18 +31,18 @@ class threadsafe_stack{
             data = other.data; //copy
         }
 
-        threadsafe_stack& operator=(const threadsafe_stack&) = delete;
+        threadsafe_stack& operator=(const threadsafe_stack&);
 
         void push(T new_value){
             std::lock_guard<std::mutex> lock(m);
-            data.emplace(std::move(new_value));
+            data.push(std::move(new_value));
         }
 
         std::shared_ptr<T> pop(){ //缺点: 可能T是一个很小的对象 资源消耗大
             std::lock_guard<std::mutex> lock(m);
 
-            if(data.empty()) throw empty_stack("return a pointer");
-            std::shared_ptr<T> const res(std::make_shared<T>(data.top())); //一个顶层const 不允许改变值
+            if(data.empty()) throw empty_stack(); //抛错有时效率太低 不如返回一个空指针
+            std::shared_ptr<T> const res(std::make_shared<T>(std::move(data.top()))); //一个顶层const 不允许改变值
             data.pop();
             return res;
         }
@@ -83,4 +83,4 @@ class threadsafe_stack{
 //最大缺点 就是在存在显著竞争的时候,线程的序列化(serialization)可能会严重影响性能
 //只能反复调用pop 并且捕获异常,
 
-#endif //THREADSAFESTACK_H_=
+#endif //THREADSAFESTACK_H_
