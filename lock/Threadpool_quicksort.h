@@ -10,7 +10,6 @@
 #include <functional>
 #include "Threadsafe_stack.h"
 
-#include<iostream>
 template<typename T>
 class sorter{
     private:
@@ -18,8 +17,8 @@ class sorter{
             std::list<T> data;
             std::promise<std::list<T>> pro;
             //chunk_to_sort(const chunk_to_sort&) = delete;//debug
-            chunk_to_sort(chunk_to_sort&&) = default;
-            chunk_to_sort() = default;
+            //chunk_to_sort(chunk_to_sort&&) = default;
+            //chunk_to_sort() = default;
         };
         std::vector<std::thread> pool;
         std::atomic_bool end_of_data;
@@ -57,7 +56,7 @@ class sorter{
             result.splice(result.end(), new_higher);
             while(new_lower.wait_for(std::chrono::seconds(0)) !=
                 std::future_status::ready){
-                try_sort_chunk();
+                try_sort_chunk(); //相当于用线程阻塞的时间去干别的事情 学到了
             }
             result.splice(result.begin(), new_lower.get());
             return std::move(result);

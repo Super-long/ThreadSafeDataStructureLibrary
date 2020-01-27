@@ -33,6 +33,7 @@ class threadsafe_stack{
 
         threadsafe_stack& operator=(const threadsafe_stack&);
 
+        //TODO:改成const T& demo_quicksort就会编译错误 我找了两个小时才编译成功 但不知道为什么
         void push(T new_value){
             std::lock_guard<std::mutex> lock(m);
             data.push(std::move(new_value));
@@ -41,7 +42,7 @@ class threadsafe_stack{
         std::shared_ptr<T> pop(){ //缺点: 可能T是一个很小的对象 资源消耗大
             std::lock_guard<std::mutex> lock(m);
 
-            if(data.empty()) throw empty_stack(); //抛错有时效率太低 不如返回一个空指针
+            if(data.empty()) throw empty_stack(); //抛错有时效率太低
             std::shared_ptr<T> const res(std::make_shared<T>(std::move(data.top()))); //一个顶层const 不允许改变值
             data.pop();
             return res;

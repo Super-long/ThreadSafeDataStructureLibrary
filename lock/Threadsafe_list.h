@@ -106,7 +106,7 @@ namespace Threadsafe{
                 }
             }
 
-            std::list<T> get_list(){ //加const就得给每个节点加mutable
+            std::list<T> get_list(){
                 node* current = &head;
                 std::list<T> stores;
                 std::vector<std::unique_lock<std::mutex>> lks;
