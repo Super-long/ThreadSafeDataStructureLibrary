@@ -27,7 +27,7 @@ using namespace std;
 } */
 
 //test of try_pop.  bool(*)(int&)
-/* int main(){
+int main(){
     Threadsafe_Queue<int> que;
     std::vector<std::thread> vec(10);
     std::vector<int> store(10, 0);
@@ -44,7 +44,7 @@ using namespace std;
         std::cout << store[i] << std::endl;
     }
     return 0;
-} */
+}
 
 //test of wait_and_pop.std::shared_ptr<int>(*)()
 /* int main(){
@@ -69,7 +69,7 @@ using namespace std;
 } */
 
 //test of try_pop. std::shared_ptr<int>(*)()
-int main(){
+/* int main(){
     Threadsafe_Queue<int> que;
     std::vector<std::future<std::shared_ptr<int>>> vec(5);
     typedef std::shared_ptr<int>(Threadsafe_Queue<int>::*function)();
@@ -91,4 +91,4 @@ int main(){
             cout << "vaild pointer : " << i << endl;
     }
     return 0;
-}
+} */
